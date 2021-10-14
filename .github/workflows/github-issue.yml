@@ -1,7 +1,11 @@
 name: Github Issue to Shortcut Story
 on: 
   issues:
+<<<<<<< HEAD
     types: [labeled, unlabeled]
+=======
+    types: [opened]
+>>>>>>> 33ded3ae8aa29f348d5fe48ddf824920882e0760
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -14,5 +18,8 @@ jobs:
     - name: Print environment variables
       run: |
         printenv
+<<<<<<< HEAD
       with:
         shortcut_api_token: ${{ secrets.SHORTCUT_API_TOKEN}}
+=======
+>>>>>>> 33ded3ae8aa29f348d5fe48ddf824920882e0760
