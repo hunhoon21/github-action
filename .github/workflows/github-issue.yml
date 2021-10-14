@@ -1,7 +1,7 @@
 name: Github Issue to Shortcut Story
 on: 
   issues:
-    types: [opened]
+    types: [labeled, unlabeled]
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -14,3 +14,5 @@ jobs:
     - name: Print environment variables
       run: |
         printenv
+      with:
+        shortcut_api_token: ${{ secrets.SHORTCUT_API_TOKEN}}
