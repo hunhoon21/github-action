@@ -13,5 +13,6 @@ jobs:
         python-version: 3.8
     - name: Use issue github action
       uses: hunhoon21/github-issue-to-shortcut-story@v0.0.3
-      # with:
-      #   shortcut_api_token: ${{ secrets.SHORTCUT_API_TOKEN}}
+      with:
+        shortcut_api_token: ${{ secrets.SHORTCUT_API_TOKEN }}
+        event: ${{ github.event }}
