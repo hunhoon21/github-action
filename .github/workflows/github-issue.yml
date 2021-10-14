@@ -12,10 +12,6 @@ jobs:
       with:
         python-version: 3.8
     - name: Use issue github action
-<<<<<<< HEAD
       uses: hunhoon21/github-issue-to-shortcut-story@v0.0.2
-=======
-      uses: hunhoon21/github-issue-to-shortcut-story@v0.0.1
->>>>>>> c706cb6130ce9569650f0986d8b4be86b75d2610
       # with:
       #   shortcut_api_token: ${{ secrets.SHORTCUT_API_TOKEN}}
