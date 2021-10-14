@@ -12,7 +12,7 @@ jobs:
       with:
         python-version: 3.8
     - name: Use issue github action
-      uses: hunhoon21/github-issue-to-shortcut-story@v0.0.7
+      uses: hunhoon21/github-issue-to-shortcut-story@v0.0.8
       with:
         shortcut_api_token: ${{ secrets.SHORTCUT_API_TOKEN }}
-        event: "shortcut"
+        label_to_create_shortcut_story: "shortcut"
