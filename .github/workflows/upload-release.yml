@@ -1,0 +1,15 @@
+name: Release
+on:
+  release:
+    types: [edited]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: 3.8
+    - name: Test
+      run: echo "HELLO"
