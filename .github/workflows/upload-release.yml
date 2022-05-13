@@ -1,9 +1,9 @@
-name: Release
+name: Update Release
 on:
   release:
     types: [published]
 jobs:
-  build:
+  update-release:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
