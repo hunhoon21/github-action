@@ -1,7 +1,14 @@
 name: Update Release
 on:
   release:
-    types: [prereleased]
+    types:
+      - published
+      - unpublished
+      - created
+      - edited
+      - deleted
+      - prereleased
+      - released
 jobs:
   update-release:
     runs-on: ubuntu-latest
