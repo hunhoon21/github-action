@@ -20,3 +20,5 @@ jobs:
         python-version: 3.8
     - name: Test
       run: echo "HELLO"
+    - name: env Test
+      run: env
