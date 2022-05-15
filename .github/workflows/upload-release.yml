@@ -1,7 +1,7 @@
 name: Update Release
 on:
   release:
-    types: [released]
+    types: [prereleased]
 jobs:
   update-release:
     runs-on: ubuntu-latest
