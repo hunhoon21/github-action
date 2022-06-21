@@ -17,9 +17,9 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: 3.8
-    # - name: Test
-    #   run: echo "HELLO"
-    # - name: Test scripts
-    #   run: python scripts/upload-release.py
-    # - name: env Test
-    #   run: env
+    - name: Test
+      run: echo "HELLO"
+    - name: Test scripts
+      run: python scripts/upload-release.py
+    - name: env Test
+      run: env
