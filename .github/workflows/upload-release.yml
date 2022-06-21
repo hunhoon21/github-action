@@ -20,7 +20,7 @@ jobs:
       with:
         python-version: 3.8
     - name: Install requirements
-      run: python3 -m pip install requirements
+      run: python3 -m pip install requirements.txt
     - name: Test
       run: echo "HELLO"
     - name: env Test
