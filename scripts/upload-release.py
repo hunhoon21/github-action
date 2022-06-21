@@ -33,5 +33,5 @@ resp = requests.get(url)
 print(resp.json())
 
 link_release_id = None
-if resp.json().ok:
+if resp.json()["ok"]:
     link_release_id = resp.json()["result"]["link_release"]["id"]
