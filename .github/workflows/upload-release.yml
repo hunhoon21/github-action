@@ -26,7 +26,7 @@ jobs:
     - name: env Test
       run: env
     - name: Test scripts
-      run: python3 scripts/upload-release.py
+      run: env && python3 scripts/upload-release.py
       env: 
         base_admin: ${{ secrets.BASE_ADMIN }}
         base_dev_admin: ${{ secrets.BASE_DEV_ADMIN }}
