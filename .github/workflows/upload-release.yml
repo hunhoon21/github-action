@@ -7,7 +7,6 @@ on:
       - created
       - edited
       - deleted
-      - prereleased
       - released
 jobs:
   update-release:
