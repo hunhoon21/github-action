@@ -7,7 +7,7 @@ tag = os.environ["GITHUB_REF_NAME"]
 
 is_develop = True if "dev" in tag.split("-") else False
 
-base_url = os.environ["INPUT_BASE_DEV_ADMIN"] if is_develop else os.environ["INPUT_BASE_ADMIN"]
+base_url = os.environ["base_dev_admin"] if is_develop else os.environ["base_admin"]
 
 auth_url = f"{base_url}/admin_user/authenticate"
 
