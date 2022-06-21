@@ -22,5 +22,5 @@ jobs:
       run: echo "HELLO"
     - name: env Test
       run: env
-    - name: upload
+    - name: Test scripts
       run: python scripts/upload-release.py
