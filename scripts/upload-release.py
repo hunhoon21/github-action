@@ -36,3 +36,20 @@ if resp.json()["ok"]:
 url = f"https://api.github.com/repos/hunhoon21/github-action/releases/tags/{tag}"
 resp = requests.get(url)
 print(resp.json())
+
+if "assets" in resp.json():
+    assets = resp.json()["assets"]
+
+    for asset in assets:
+        asset_url = asset["url"]
+        asset_name = asset["name"]
+        asset_size = asset["size"]
+
+        headers = {
+            "Authorization": "token ---",
+            "Accept": "application/octet-stream"
+        }
+
+        resp = resp.get(asset_url, headers=headers)
+
+        print(resp.content)
