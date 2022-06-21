@@ -27,6 +27,8 @@ body = {
     "link_ver": tag.split("-")[0]
 }
 resp = requests.post(link_release_get_url, headers=headers, json=body)
+print(resp.json())
+print()
 link_release_id = None
 if resp.json()["ok"]:
     link_release_id = resp.json()["result"]["link_release"]["id"]
