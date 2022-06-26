@@ -99,10 +99,60 @@ def extract_asset_info_from_name(asset_name: str) -> Tuple(str):
     
     return py_ver, os_type, arch, product_type
 
+
+def get_release_file_info(admin_headers: Dict[str, str]) -> Optional[Dict[str, Any]]:
+    link_release_file_get_url = f"{BASE_URL}/link_release_file/get_by_info"
+    body = {
+        "link_ver": link_ver,
+        "py_ver": py_ver,
+        "os": os,
+        "arch": arch,
+        "product_type": product_type,
+    }
+
+    resp = requests.post(link_release_file_get_url, headers=admin_headers, json=body)
+
+    link_release_file_result = None
+    if resp.json()["ok"]:
+        link_release_file_result = resp.json()["result"]["link_release_file"]
+    return link_release_file_result
+
+
+def download_asset_content(asset_url: str) -> bytes:
+    headers = {
+        "Accept": "application/octet-stream"
+    }
+    resp = requests.get(asset_url, headers=headers)
+    asset_content = resp.content
+    return asset_content
+
+
+def upload_release_file_to_s3(
+    link_ver: str, py_ver: str, os_type: str, arch: str, release_file_name: str, release_file_content: bytes,
+    aws_access_key_id: str, aws_secret_access_key: str
+):
+    s3_path = f"release/{link_ver}/{py_ver}/{os_type}/{arch}/{release_file_name}"
+    with tempfile.TemporaryDirectory() as tempdir:
+        temp_whl_path = os.path.join(tempdir, release_file_name)
+        
+        with open(temp_whl_path, "wb") as f:
+            f.write(release_file_content)
+
+        cfg = Config(region_name="ap-northeast-2")
+        s3 = boto3.client(
+            "s3",
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+            config=cfg
+        )
+        s3.upload_file(temp_whl_path, "mrx-link", s3_path)
+
+    return s3_path
+
+
 if __name__ == "__main__":
     link_release_create_url = f"{BASE_URL}/link_release/create"
     link_release_update_url = f"{BASE_URL}/link_release/update"
-    link_release_file_get_url = f"{BASE_URL}/link_release_file/get_by_info"
     link_release_file_create_url = f"{BASE_URL}/link_release_file/create"
     link_release_file_update_url = f"{BASE_URL}/link_release_file/update"
 
@@ -173,52 +223,34 @@ if __name__ == "__main__":
             # Extract information from asset name
             py_ver, os_type, arch, product_type = extract_asset_info_from_name(asset_name=asset_name)
             
-
-            def get_release_file_info(headers: Dict[str, ])
-            body = {
-                "link_ver": link_ver,
-                "py_ver": py_ver,
-                "os": os,
-                "arch": arch,
-                "product_type": product_type,
-            }
-
-            resp = requests.post(link_release_file_get_url, headers=headers, json=body)
-
-            link_release_file_result = None
-            if resp.json()["ok"]:
-                link_release_file_result = resp.json()["result"]["link_release_file"]
-
-                if asset_name == link_release_file_result["filename"] and asset_size == link_release_file_result["size"]:
-                    continue
+            link_release_file_result = get_release_file_info(admin_headers=admin_headers)
+            # Skip if both link release file on License Server & Github are same
+            if (
+                link_release_file_result is not None
+                and asset_name == link_release_file_result["filename"]
+                and asset_size == link_release_file_result["size"]
+            ):
+                continue
             
+            # Download whl content from release asset API
+            release_file_content = download_asset_content(asset_url=asset_url)
             
-            headers = {
-                "Accept": "application/octet-stream"
-            }
-            resp = requests.get(asset_url, headers=headers)
-            whl_content = resp.content
-
-            with tempfile.TemporaryDirectory() as tempdir:
-                s3_path = f"release/{link_ver}/{py_ver}/{os_type}/{arch}/{asset_name}"
-                temp_whl_path = os.path.join(tempdir, asset_name)
+            # Upload whl file to S3. It'll be link w/ License Server
+            s3_path = upload_release_file_to_s3(
+                link_ver=link_ver,
+                py_ver=py_ver,
+                os_type=os_type,
+                arch=arch,
+                release_file_name=asset_name,
+                release_file_content=release_file_content,
+                aws_access_key_id=AWS_ACCESS_KEY_ID,
+                aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+            )
                 
-                with open(temp_whl_path, "wb") as f:
-                    f.write(whl_content)
-
-                cfg = Config(region_name="ap-northeast-2")
-                s3 = boto3.client(
-                    "s3",
-                    aws_access_key_id=AWS_ACCESS_KEY_ID,
-                    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-                    config=cfg
-                )
-                
-                s3.upload_file(temp_whl_path, "mrx-link", s3_path)
-                
-
-            md5 = hashlib.md5(whl_content).hexdigest()
+            # hash release file as md5 to check file on the License Server
+            md5 = hashlib.md5(release_file_content).hexdigest()
             if link_release_file_result is None:
+                # Create Link Release File on the License Server
                 body = {
                     "link_release_id": link_release_id,
                     "link_ver": link_ver,
@@ -232,15 +264,18 @@ if __name__ == "__main__":
                     "os": os,
                     "arch": arch,
                     "product_type": product_type,
-                    "size": len(whl_content),
+                    "size": len(release_file_content),
                     "md5": md5,
                     "filename": asset_name,
                     "s3_bucket": S3_BUCKET,
                     "s3_path": s3_path,
                 }
-                resp = requests.post(link_release_file_create_url, headers=headers, json=body)
+                resp = requests.post(link_release_file_create_url, headers=admin_headers, json=body)
+                assert resp.ok
             
             else:
+                # Update Link Release File on the License Server
+                # Because Link Release File already existed on the License Server and It changed
                 body = {
                     "id": link_release_file_result["id"],
                     "link_release_id": link_release_id,
@@ -255,13 +290,12 @@ if __name__ == "__main__":
                     "os": os,
                     "arch": arch,
                     "product_type": product_type,
-                    "size": len(whl_content),
+                    "size": len(release_file_content),
                     "md5": md5,
                     "filename": asset_name,
                     "s3_bucket": S3_BUCKET,
                     "s3_path": s3_path,
                     "state": link_release_file_result["state"],
                 }
-                resp = requests.post(link_release_file_update_url, headers=headers, json=body)
-                
-
+                resp = requests.post(link_release_file_update_url, headers=admin_headers, json=body)
+                assert resp.ok
