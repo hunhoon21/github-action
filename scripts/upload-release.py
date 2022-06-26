@@ -1,9 +1,11 @@
 import os
+import boto3
+from botocore.config import Config
+import tempfile
 import requests
 from pathlib import Path
 import hashlib
 
-print("say hello")
 
 TAG = os.environ["GITHUB_REF_NAME"]
 
@@ -100,7 +102,7 @@ if "assets" in release_on_github:
             continue
 
         py_ver = ""
-        os = ""
+        os_type = ""
         arch = ""
         product_type = "whl"
 
@@ -117,11 +119,11 @@ if "assets" in release_on_github:
             py_ver = "3.9"
         
         if "linux" in asset_name:
-            os = "linux"
+            os_type = "linux"
         elif "win" in asset_name:
-            os = "windows"
+            os_type = "windows"
         elif "macosx" in asset_name:
-            os = "mac"
+            os_type = "mac"
         
         if "arm64" in asset_name:
             arch = "arm64"
@@ -141,14 +143,45 @@ if "assets" in release_on_github:
         link_release_file_result = None
         if resp.json()["ok"]:
             link_release_file_result = resp.json()["result"]["link_release_file"]
+
+            if asset_name == link_release_file_result["filename"] and asset_size == link_release_file_result["size"]:
+                continue
+        
         
         headers = {
             "Accept": "application/octet-stream"
         }
         resp = requests.get(asset_url, headers=headers)
-        content = resp.content
+        whl_content = resp.content
 
-        md5 =hashlib.md5(content).hexdigest()
+        with tempfile.TemporaryDirectory() as tempdir:
+            s3_path = f"release/{link_ver}/{py_ver}/{os_type}/{arch}/{asset_name}"
+            temp_whl_path = os.path.join(tempdir, asset_name)
+            
+            with open(temp_whl_path, "wb") as f:
+                f.write(whl_content)
+
+            cfg = Config(region_name="ap-northeast-2")
+            if is_develop:
+                aws_access_key_id= os.environ["DEV_AWS_ACCESS_KEY_ID"]
+                aws_secret_access_key=os.environ["DEV_AWS_SECRET_ACCESS_KEY"]
+                s3_bucket = "mrx-link"
+            else:
+                aws_access_key_id= os.environ["PROD_AWS_ACCESS_KEY_ID"]
+                aws_secret_access_key=os.environ["PROD_AWS_SECRET_ACCESS_KEY"]
+                s3_bucket = "prod-mrx-link"
+
+            s3 = boto3.client(
+                "s3",
+                aws_access_key_id=aws_access_key_id,
+                aws_secret_access_key=aws_secret_access_key,
+                config=cfg
+            )
+            
+            s3.upload_file(temp_whl_path, "mrx-link", s3_path)
+            
+
+        md5 = hashlib.md5(whl_content).hexdigest()
         if link_release_file_result is None:
             body = {
                 "link_release_id": link_release_id,
@@ -163,11 +196,34 @@ if "assets" in release_on_github:
                 "os": os,
                 "arch": arch,
                 "product_type": product_type,
-                "size": len(content),
+                "size": len(whl_content),
                 "md5": md5,
                 "filename": asset_name,
-                "s3_bucket": "string",
-                "s3_path": "string",
+                "s3_bucket": s3_bucket,
+                "s3_path": s3_path,
             }
             resp = requests.post(link_release_file_create_url, headers=headers, json=body)
+        
+        else:
+            body = {
+                "id": link_release_file_result["id"],
+                "link_release_id": link_release_id,
+                "link_ver": link_ver,
+                "link_ver_name": TAG,
+                "link_ver_major": int(link_ver.split(".")[0]),
+                "link_ver_minor": int(link_ver.split(".")[1]),
+                "link_ver_micro": int(link_ver.split(".")[2]),
+                "commit_id": commit_id,
+                "release_date": asset_date,
+                "py_ver": py_ver,
+                "os": os,
+                "arch": arch,
+                "product_type": product_type,
+                "size": len(whl_content),
+                "md5": md5,
+                "filename": asset_name,
+                "s3_bucket": s3_bucket,
+                "s3_path": s3_path,
+                "state": link_release_file_result["state"],
+            }
 
