@@ -13,13 +13,13 @@ REPO = os.environ["GITHUB_REPOSITORY"]
 
 is_develop = True if "dev" in TAG.split("-") else False
 
-BASE_URL = os.environ["BASE_DEV_ADMIN"] if is_develop else os.environ["BASE_ADMIN"]
+BASE_URL = os.environ["BASE_DEV_ADMIN"] if is_develop else os.environ["BASE_PROD_ADMIN"]
 
 auth_url = f"{BASE_URL}/admin_user/authenticate"
 
 # get auth headers to call Link License API
-email = "admin@test.com"
-pw = "12345aA!"
+email = os.environ["EMAIL_DEV_ADMIN"] if is_develop else os.environ["EMAIL_PROD_ADMIN"]
+pw = os.environ["PW_DEV_ADMIN"] if is_develop else os.environ["PW_PROD_ADMIN"]
 body = {"email": email, "password": pw}
 
 resp = requests.post(auth_url, json=body)
