@@ -13,7 +13,7 @@ REPO = os.environ["GITHUB_REPOSITORY"]
 
 is_develop = True if "dev" in TAG.split("-") else False
 
-BASE_URL = os.environ["base_dev_admin"] if is_develop else os.environ["base_admin"]
+BASE_URL = os.environ["BASE_DEV_ADMIN"] if is_develop else os.environ["BASE_ADMIN"]
 
 auth_url = f"{BASE_URL}/admin_user/authenticate"
 
