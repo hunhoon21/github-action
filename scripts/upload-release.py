@@ -1,11 +1,11 @@
 import os
-import boto3
-from botocore.config import Config
-from typing import Any, Dict, Optional, Tuple
-import tempfile
-import requests
-from pathlib import Path
-import hashlib
+# import boto3
+# from botocore.config import Config
+# from typing import Any, Dict, Optional, Tuple
+# import tempfile
+# import requests
+# from pathlib import Path
+# import hashlib
 
 
 TAG = os.environ["GITHUB_REF_NAME"]
