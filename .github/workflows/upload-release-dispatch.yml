@@ -1,0 +1,34 @@
+name: Update Release Dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: TAG
+        required: true
+        default: 0.0.1-dev
+jobs:
+  update-release:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        ref: main
+    - name: Install Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: 3.8
+    - name: Install requirements
+      run: python3 -m pip install -r requirements.txt
+    - name: Test
+      run: echo "HELLO"
+    - name: env Test
+      run: env
+    - name: env Test 2
+      run: env
+      env:
+        TAG_NAME: ${{ github.event.inputs.tag_name }}
+    - name: Test scripts
+      run: env && python3 scripts/upload-release.py
+      env: 
+        base_admin: ${{ secrets.BASE_ADMIN }}
+        base_dev_admin: ${{ secrets.BASE_DEV_ADMIN }}
